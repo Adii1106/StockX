@@ -24,10 +24,10 @@ app.use((req, res, next) => {
   next();
 });
 
+const connectDB = require('./db');
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+connectDB();
 
 app.use(express.json());
 
