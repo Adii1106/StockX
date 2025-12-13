@@ -36,6 +36,24 @@ app.get('/', (req, res) => {
   res.send('StockX API is running...');
 });
 
+app.get('/api/ping', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date(), 
+    env: { 
+      mongo: process.env.MONGO_URI ? 'Set' : 'Missing',
+      port: process.env.PORT
+    } 
+  });
+});
+
+// Connect to MongoDB (Safe Mode)
+try {
+  connectDB().catch(err => console.error('Init DB connection failed:', err));
+} catch (e) {
+  console.error('Synchronous DB error:', e);
+}
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/stocks', require('./routes/stocks'));
