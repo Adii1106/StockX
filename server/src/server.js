@@ -10,17 +10,25 @@ const PORT = process.env.PORT || 5000;
 
 
 
-// 2. Manual CORS headers to ensure no library issues
+// 2. Manual CORS headers
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
-  res.header('Access-Control-Allow-Origin', origin);
+  const allowedOrigins = ['http://localhost:5173', 'https://stock-x-eta.vercel.app'];
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    // Fallback for tools like Postman or non-browser
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Intercept OPTIONS method
+  // Handle preflight
   if (req.method === 'OPTIONS') {
-    return res.status(200).send('OK');
+    return res.status(200).end();
   }
   next();
 });
