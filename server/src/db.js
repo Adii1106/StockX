@@ -13,7 +13,8 @@ async function connectDB() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true, // Allow buffering to handle serverless cold starts
+      bufferCommands: true, 
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging
     };
 
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
