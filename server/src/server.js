@@ -36,15 +36,24 @@ app.get('/', (req, res) => {
   res.send('StockX API is running...');
 });
 
-app.get('/api/ping', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date(), 
-    env: { 
-      mongo: process.env.MONGO_URI ? 'Set' : 'Missing',
-      port: process.env.PORT
-    } 
-  });
+app.get('/api/ping', async (req, res) => {
+  try {
+    const conn = await connectDB();
+    const state = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'][conn.connection.readyState];
+    res.json({ 
+      status: 'ok', 
+      dbState: state,
+      dbHost: conn.connection.host,
+      timestamp: new Date()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error', 
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
+  }
 });
 
 // Connect to MongoDB (Safe Mode)
