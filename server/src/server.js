@@ -40,6 +40,12 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/stocks', require('./routes/stocks'));
 app.use('/api/watchlist', require('./routes/watchlist'));
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export for Vercel
+module.exports = app;
+
+// Only listen if not running on Vercel (local dev)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
