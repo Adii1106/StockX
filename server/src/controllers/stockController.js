@@ -139,6 +139,42 @@ const getMarketNews = async (req, res) => {
   }
 };
 
+// @desc    Get batch quotes for multiple symbols
+// @route   GET /api/stocks/batch?symbols=AAPL,NVDA,GOOGL
+const getBatchQuotes = async (req, res) => {
+  try {
+    const { symbols } = req.query;
+    if (!symbols) {
+      return res.status(400).json({ message: 'Symbols parameter is required' });
+    }
+
+    const symbolArray = symbols.split(',').map(s => s.trim());
+    const quotes = await Promise.all(
+      symbolArray.map(async (symbol) => {
+        try {
+          const quote = await yahooFinance.quote(symbol);
+          return {
+            symbol: quote.symbol,
+            price: quote.regularMarketPrice,
+            change: quote.regularMarketChangePercent,
+            name: quote.longName || quote.shortName,
+          };
+        } catch (error) {
+          console.error(`Error fetching ${symbol}:`, error.message);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed requests
+    const validQuotes = quotes.filter(q => q !== null);
+    res.json(validQuotes);
+  } catch (error) {
+    console.error('Error fetching batch quotes:', error.message);
+    res.status(500).json({ message: 'Error fetching batch quotes' });
+  }
+};
+
 module.exports = {
   getQuote,
   getHistory,
@@ -146,4 +182,5 @@ module.exports = {
   getNews,
   getExchangeRates,
   getMarketNews,
+  getBatchQuotes,
 };

@@ -7,6 +7,7 @@ const {
   getNews,
   getExchangeRates,
   getMarketNews,
+  getBatchQuotes,
 } = require('../controllers/stockController');
 
 router.get('/quote/:symbol', getQuote);
@@ -15,5 +16,6 @@ router.get('/search', searchStocks);
 router.get('/news/general', getMarketNews); // General news
 router.get('/news/:symbol', getNews);       // Specific stock news
 router.get('/rates', getExchangeRates);
+router.get('/batch', getBatchQuotes);
 
 module.exports = router;

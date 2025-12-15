@@ -27,31 +27,40 @@ const DashboardPage = () => {
     const [rates, setRates] = useState({ USD: 1 });
     const [loadingNews, setLoadingNews] = useState(false);
 
-    // Mock Data for "Market Movers" with Categories and Domains
-    const marketMovers = [
+    // Market Movers State
+    const [marketMovers, setMarketMovers] = useState([]);
+    const [loadingMarketMovers, setLoadingMarketMovers] = useState(false);
+
+    // Static metadata for Market Movers (category, domain)
+    const marketMoversConfig = [
         // Technology
-        { symbol: 'AAPL', name: 'Apple Inc.', price: 195.40, change: 1.25, category: 'Technology', domain: 'apple.com' },
-        { symbol: 'NVDA', name: 'NVIDIA Corp', price: 824.50, change: 3.40, category: 'Technology', domain: 'nvidia.com' },
-        { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 173.80, change: -0.45, category: 'Technology', domain: 'google.com' },
-        { symbol: 'MSFT', name: 'Microsoft Corp', price: 425.00, change: 0.60, category: 'Technology', domain: 'microsoft.com' },
+        { symbol: 'AAPL', category: 'Technology', domain: 'apple.com' },
+        { symbol: 'NVDA', category: 'Technology', domain: 'nvidia.com' },
+        { symbol: 'GOOGL', category: 'Technology', domain: 'google.com' },
+        { symbol: 'MSFT', category: 'Technology', domain: 'microsoft.com' },
 
         // Financial
-        { symbol: 'JPM', name: 'JPMorgan Chase', price: 198.50, change: 0.85, category: 'Financial', domain: 'jpmorganchase.com' },
-        { symbol: 'BAC', name: 'Bank of America', price: 39.40, change: 0.30, category: 'Financial', domain: 'bankofamerica.com' },
-        { symbol: 'V', name: 'Visa Inc.', price: 275.20, change: -0.15, category: 'Financial', domain: 'visa.com' },
-        { symbol: 'MA', name: 'Mastercard', price: 450.10, change: 1.10, category: 'Financial', domain: 'mastercard.com' },
+        { symbol: 'JPM', category: 'Financial', domain: 'jpmorganchase.com' },
+        { symbol: 'BAC', category: 'Financial', domain: 'bankofamerica.com' },
+        { symbol: 'V', category: 'Financial', domain: 'visa.com' },
+        { symbol: 'MA', category: 'Financial', domain: 'mastercard.com' },
 
         // Services
-        { symbol: 'AMZN', name: 'Amazon.com', price: 182.10, change: 0.85, category: 'Services', domain: 'amazon.com' },
-        { symbol: 'DIS', name: 'Walt Disney Co', price: 105.60, change: -1.20, category: 'Services', domain: 'thewaltdisneycompany.com' }, // explicit domain for better logo
-        { symbol: 'NFLX', name: 'Netflix Inc.', price: 620.00, change: 2.50, category: 'Services', domain: 'netflix.com' },
-        { symbol: 'MCD', name: 'McDonald\'s', price: 265.40, change: 0.45, category: 'Services', domain: 'mcdonalds.com' },
+        { symbol: 'AMZN', category: 'Services', domain: 'amazon.com' },
+        { symbol: 'DIS', category: 'Services', domain: 'thewaltdisneycompany.com' },
+        { symbol: 'NFLX', category: 'Services', domain: 'netflix.com' },
+        { symbol: 'MCD', category: 'Services', domain: 'mcdonalds.com' },
     ];
 
     useEffect(() => {
-        fetchWatchlist();
-        fetchRates();
-        fetchGeneralNews();
+        const fetchInitialData = async () => {
+            fetchWatchlist();
+            fetchRates();
+            fetchGeneralNews();
+            fetchMarketMovers();
+        };
+        fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -60,6 +69,30 @@ const DashboardPage = () => {
             fetchNews(currentSymbol);
         }
     }, [currentSymbol]);
+
+    const fetchMarketMovers = async () => {
+        setLoadingMarketMovers(true);
+        try {
+            const symbols = marketMoversConfig.map(s => s.symbol).join(',');
+            const { data } = await api.get(`/stocks/batch?symbols=${symbols}`);
+
+            // Merge API data with static metadata
+            const mergedData = data.map(apiStock => {
+                const config = marketMoversConfig.find(c => c.symbol === apiStock.symbol);
+                return {
+                    ...apiStock,
+                    category: config?.category || 'Other',
+                    domain: config?.domain || `${apiStock.symbol.toLowerCase()}.com`,
+                };
+            });
+
+            setMarketMovers(mergedData);
+        } catch (error) {
+            console.error('Error fetching market movers', error);
+        } finally {
+            setLoadingMarketMovers(false);
+        }
+    };
 
     const fetchRates = async () => {
         try {
@@ -271,6 +304,7 @@ const DashboardPage = () => {
                             onSelect={handleSearch}
                             currencySymbol={getCurrencySymbol()}
                             rate={rate}
+                            loading={loadingMarketMovers}
                         />
                     </div>
 
@@ -358,7 +392,7 @@ const NewsGrid = ({ news, loading, limit }) => {
                                     }
                                     return 'Recent';
                                 } catch (e) {
-                                    return(e,'Recent');
+                                    return (e, 'Recent');
                                 }
                             })()}
                         </div>
