@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  balance: {
+    type: Number,
+    default: 10000, // starting with 10k fake money!
+  },
 }, { timestamps: true });
 
 // Method to compare password
@@ -23,9 +27,9 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Pre-save hook to hash password
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('passwordHash')) {
-    return next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
