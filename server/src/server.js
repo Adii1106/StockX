@@ -65,6 +65,7 @@ try {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/stocks', require('./routes/stocks'));
 app.use('/api/watchlist', require('./routes/watchlist'));
+app.use('/api/portfolio', require('./routes/portfolio')); // Virtual Trading!
 
 // Export for Vercel
 module.exports = app;
