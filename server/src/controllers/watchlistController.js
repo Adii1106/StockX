@@ -50,7 +50,7 @@ const removeWatchlistItem = async (req, res) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    // Check user ownership
+    // make sure user owns this item before deleting!
     if (item.userId.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Not authorized' });
     }

@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 
 
-// 2. Manual CORS headers (Simple Wildcard for Debugging)
+// fix cors issues... hopefully
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*'); 
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -31,7 +31,7 @@ connectDB();
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('StockX API is running...');
+  res.send('API running...');
 });
 
 app.get('/api/ping', async (req, res) => {
@@ -72,6 +72,6 @@ module.exports = app;
 // Only listen if not running on Vercel (local dev)
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Listening on ${PORT}... lets go!`);
   });
 }

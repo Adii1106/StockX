@@ -22,12 +22,14 @@ const ProfilePage = () => {
         fetchWatchlist();
     }, []);
 
-    const removeFromWatchlist = async (id) => {
+    const deleteItem = async (id) => {
         try {
             await api.delete(`/watchlist/${id}`);
-            setWatchlist(watchlist.filter(item => item._id !== id));
+            // update ui logic
+            const newList = watchlist.filter(item => item._id !== id);
+            setWatchlist(newList);
         } catch (err) {
-            console.error(err);
+            console.log('error deleting', err);
         }
     };
 
@@ -62,8 +64,8 @@ const ProfilePage = () => {
                 <h2 style={{ fontSize: '1.5rem', marginBottom: '20px' }}>My Watchlist</h2>
                 <Watchlist
                     watchlist={watchlist}
-                    onSelect={() => { }} // No-op on profile page or could redirect to dashboard
-                    onRemove={removeFromWatchlist}
+                    onSelect={() => { }} // doing nothing here for now
+                    onRemove={deleteItem}
                 />
             </div>
         </div>

@@ -22,6 +22,8 @@ const StockCard = ({ stock, onAddToWatchlist, isWatchlisted, currencySymbol = '$
         return num.toLocaleString();
     };
 
+    // weird logic to get favicons... trying to match symbols to domains
+    // TODO: move this to backend??
     const getDomain = (symbol) => {
         const map = {
             'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'GOOG': 'google.com',
@@ -31,9 +33,9 @@ const StockCard = ({ stock, onAddToWatchlist, isWatchlisted, currencySymbol = '$
             'CSCO': 'cisco.com', 'INTC': 'intel.com', 'AMD': 'amd.com', 'WMT': 'walmart.com',
             'TGT': 'target.com', 'KO': 'coca-colacompany.com', 'PEP': 'pepsico.com'
         };
-        // Clean symbol (remove .NS, .BO etc if needed, though usually main part is enough)
-        const cleanSym = symbol.split('.')[0].toUpperCase();
-        return map[cleanSym] || `${cleanSym.toLowerCase()}.com`;
+
+        const s = symbol.split('.')[0].toUpperCase();
+        return map[s] || s.toLowerCase() + '.com';
     };
 
     return (

@@ -5,8 +5,9 @@ const LandingPage = () => {
     return (
         <div>
             <Navbar />
+            {/* HERO SECTION */}
             <div style={{
-                minHeight: 'calc(100vh - 70px)',
+                minHeight: 'calc(100vh - 70px)', // account for navbar
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',

@@ -6,6 +6,7 @@ const yahooFinance = new YahooFinance();
 const getQuote = async (req, res) => {
   try {
     const symbol = req.params.symbol;
+    // using yahoo finance wrapper because i dont want to pay for an api
     const quote = await yahooFinance.quote(symbol);
     
     // Normalize data for frontend
@@ -43,6 +44,7 @@ const getHistory = async (req, res) => {
     // yahoo-finance2 historical is powerful
     
     // Simplification for MVP: get last 100 days
+    // TODO: make this configurable later?
     const today = new Date();
     const pastDate = new Date();
     pastDate.setDate(today.getDate() - 100);

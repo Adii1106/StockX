@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
+  // base url for api... change if deploying?
   baseURL: '/api',
 });
 

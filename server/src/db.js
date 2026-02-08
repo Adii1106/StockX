@@ -6,7 +6,7 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-async function connectDB() {
+const connect = async () => {
   if (cached.conn) {
     return cached.conn;
   }
@@ -14,11 +14,11 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: true, 
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging
+      serverSelectionTimeoutMS: 5000, 
     };
 
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
-      console.log('MongoDB Connected via Serverless Cache');
+      console.log('DB connected!');
       return mongoose;
     });
   }
@@ -27,11 +27,10 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.error('MongoDB Connection Error:', e);
     throw e;
   }
 
   return cached.conn;
 }
 
-module.exports = connectDB;
+module.exports = connect;

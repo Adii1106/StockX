@@ -1,0 +1,58 @@
+.market-snapshot-card {
+    padding: 80px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.market-snapshot-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.market-snapshot-title {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+}
+
+.market-snapshot-desc {
+    max-width: 400px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.global-headlines-section {
+    width: 100%;
+    text-align: left;
+}
+
+.global-headlines-title {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .market-snapshot-card {
+        padding: 40px 20px;
+    }
+
+    .global-headlines-section {
+        text-align: center;
+    }
+
+    .global-headlines-title {
+        text-align: center;
+    }
+}

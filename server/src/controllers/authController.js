@@ -11,10 +11,11 @@ const generateToken = (id) => {
 
 // @desc    Register new user
 // @route   POST /api/auth/signup
-const registerUser = async (req, res) => {
+const handleSignup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    // basic validation
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please add all fields' });
     }
@@ -84,7 +85,7 @@ const getMe = async (req, res) => {
 };
 
 module.exports = {
-  registerUser,
+  registerUser: handleSignup,
   loginUser,
   getMe,
 };

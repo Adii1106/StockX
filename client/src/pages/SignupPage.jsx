@@ -10,8 +10,15 @@ const SignupPage = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
-    const handleSubmit = async (e) => {
+    const doSignup = async (e) => {
         e.preventDefault();
+
+        // TODO: add stronger password checks later
+        if (password.length < 6) {
+            setError('Password too short (min 6 chars)');
+            return;
+        }
+
         try {
             await signup(name, email, password);
             navigate('/dashboard');
@@ -24,7 +31,7 @@ const SignupPage = () => {
         <div className="auth-container card">
             <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Create Account</h2>
             {error && <div style={{ color: 'var(--danger)', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={doSignup}>
                 <div className="form-group">
                     <label>Full Name</label>
                     <input

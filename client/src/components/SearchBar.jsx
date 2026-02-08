@@ -33,8 +33,9 @@ const SearchBar = ({ onSearch }) => {
             }
         };
 
-        const timeoutId = setTimeout(fetchSuggestions, 300); // 300ms debounce
-        return () => clearTimeout(timeoutId);
+        // debounce api calls so we don't spam the server
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
     }, [query]);
 
     const handleSubmit = (e) => {

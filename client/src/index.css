@@ -147,8 +147,10 @@ nav {
   font-size: 1.5rem;
   font-weight: 800;
   background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+
 }
 
 .nav-links {
@@ -197,4 +199,19 @@ input:focus {
   max-width: 400px;
   margin: 80px auto;
   padding: 40px;
+}
+
+/* Responsive Dashboard Layout */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 30px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
 }

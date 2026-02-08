@@ -25,10 +25,12 @@ export const AuthProvider = ({ children }) => {
         checkUserLoggedIn();
     }, []);
 
-    const login = async (email, password) => {
-        const { data } = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', data.token);
-        setUser(data);
+    const handleLogin = async (e, p) => {
+        // just post data and let the component catch any errors
+        const res = await api.post('/auth/login', { email: e, password: p });
+
+        localStorage.setItem('token', res.data.token);
+        setUser(res.data);
     };
 
     const signup = async (name, email, password) => {
@@ -43,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, login: handleLogin, signup, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

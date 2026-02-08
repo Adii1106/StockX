@@ -29,6 +29,11 @@ const PriceChart = ({ data, currencySymbol = '$', rate = 1 }) => {
                         bottom: 0,
                     }}
                 >
+                    {/* config options for chart... kinda complex */}
+                    {/* 
+                      TODO: Add more chart options later? 
+                      Current default works fine for now.
+                    */}
                     <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={color} stopOpacity={0.3} />

@@ -2,7 +2,9 @@ import { TrendingUp, Globe, LogOut } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 
-const DashboardHeader = ({ user, logout, currency, setCurrency }) => {
+// Main header component for the dashboard
+// handles currency switching and logout
+function DashboardHeader({ user, logout, currency, setCurrency }) {
     return (
         <nav style={{
             height: '70px',

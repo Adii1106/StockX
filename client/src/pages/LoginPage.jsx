@@ -9,14 +9,17 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const doLogin = async (e) => {
+        e.preventDefault(); // stop reload
+
         try {
             await login(email, password);
+            // go to dashboard if works
             navigate('/dashboard');
         } catch (err) {
-            const message = err.response?.data?.message || 'Login failed. Please check your connection and credentials.';
-            setError(message);
+            console.log(err);
+            const msg = err.response?.data?.message || 'Login failed... try again?';
+            setError(msg);
         }
     };
 
@@ -24,7 +27,7 @@ const LoginPage = () => {
         <div className="auth-container card">
             <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Welcome Back</h2>
             {error && <div style={{ color: 'var(--danger)', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={doLogin}>
                 <div className="form-group">
                     <label>Email Address</label>
                     <input

@@ -6,9 +6,9 @@ const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
     const location = useLocation();
 
-    if (location.pathname === '/login' || location.pathname === '/signup') {
-        return null;
-    }
+    // hide navbar on auth pages
+    const isAuthPage = ['/login', '/signup'].includes(location.pathname);
+    if (isAuthPage) return null;
 
     return (
         <nav>

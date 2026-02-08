@@ -9,6 +9,7 @@ import Watchlist from '../components/Watchlist';
 import DashboardHeader from '../components/DashboardHeader';
 import { TrendingUp, Newspaper, Globe, LogOut, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import './DashboardPage.css';
 
 const DashboardPage = () => {
     const { user, logout } = useContext(AuthContext);
@@ -31,21 +32,21 @@ const DashboardPage = () => {
     const [marketMovers, setMarketMovers] = useState([]);
     const [loadingMarketMovers, setLoadingMarketMovers] = useState(false);
 
-    // Static metadata for Market Movers (category, domain)
-    const marketMoversConfig = [
-        // Technology
+    // Static data for now... need to move to DB later
+    const MOVERS_DATA = [
+        // Tech stocks
         { symbol: 'AAPL', category: 'Technology', domain: 'apple.com' },
         { symbol: 'NVDA', category: 'Technology', domain: 'nvidia.com' },
         { symbol: 'GOOGL', category: 'Technology', domain: 'google.com' },
         { symbol: 'MSFT', category: 'Technology', domain: 'microsoft.com' },
 
-        // Financial
+        // Bank stuff
         { symbol: 'JPM', category: 'Financial', domain: 'jpmorganchase.com' },
         { symbol: 'BAC', category: 'Financial', domain: 'bankofamerica.com' },
         { symbol: 'V', category: 'Financial', domain: 'visa.com' },
         { symbol: 'MA', category: 'Financial', domain: 'mastercard.com' },
 
-        // Services
+        // Others
         { symbol: 'AMZN', category: 'Services', domain: 'amazon.com' },
         { symbol: 'DIS', category: 'Services', domain: 'thewaltdisneycompany.com' },
         { symbol: 'NFLX', category: 'Services', domain: 'netflix.com' },
@@ -53,14 +54,15 @@ const DashboardPage = () => {
     ];
 
     useEffect(() => {
-        const fetchInitialData = async () => {
+        // load everything on start
+        const loadAll = async () => {
             fetchWatchlist();
             fetchRates();
             fetchGeneralNews();
             fetchMarketMovers();
         };
-        fetchInitialData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        loadAll();
     }, []);
 
     useEffect(() => {
@@ -73,22 +75,25 @@ const DashboardPage = () => {
     const fetchMarketMovers = async () => {
         setLoadingMarketMovers(true);
         try {
-            const symbols = marketMoversConfig.map(s => s.symbol).join(',');
-            const { data } = await api.get(`/stocks/batch?symbols=${symbols}`);
+            // join symbols with comma
+            const symbols = MOVERS_DATA.map(s => s.symbol).join(',');
 
-            // Merge API data with static metadata
-            const mergedData = data.map(apiStock => {
-                const config = marketMoversConfig.find(c => c.symbol === apiStock.symbol);
+            const response = await api.get(`/stocks/batch?symbols=${symbols}`);
+            const data = response.data;
+
+            // combine api data with our static list
+            const finalData = data.map(stock => {
+                const meta = MOVERS_DATA.find(m => m.symbol === stock.symbol);
                 return {
-                    ...apiStock,
-                    category: config?.category || 'Other',
-                    domain: config?.domain || `${apiStock.symbol.toLowerCase()}.com`,
+                    ...stock,
+                    category: meta?.category || 'Other',
+                    domain: meta?.domain || stock.symbol.toLowerCase() + '.com',
                 };
             });
 
-            setMarketMovers(mergedData);
-        } catch (error) {
-            console.error('Error fetching market movers', error);
+            setMarketMovers(finalData);
+        } catch (err) {
+            console.log('failed to get movers', err);
         } finally {
             setLoadingMarketMovers(false);
         }
@@ -124,20 +129,22 @@ const DashboardPage = () => {
     const fetchStockData = async (symbol) => {
         setLoading(true);
         setError(null);
-        try {
-            const quoteRes = await api.get(`/stocks/quote/${symbol}`);
-            const historyRes = await api.get(`/stocks/history/${symbol}`);
 
-            setStockData(quoteRes.data);
-            setChartData(historyRes.data);
+        try {
+            // get quote and history in parallel? nah just await both
+            const q = await api.get(`/stocks/quote/${symbol}`);
+            const h = await api.get(`/stocks/history/${symbol}`);
+
+            setStockData(q.data);
+            setChartData(h.data);
+
         } catch (err) {
-            console.error(err);
-            setError('Could not fetch stock data. Please try again.');
+            console.log(err);
+            setError('Could not fetch stock data... try again later');
             setStockData(null);
             setChartData([]);
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     };
 
     const fetchNews = async (symbol) => {
@@ -180,7 +187,7 @@ const DashboardPage = () => {
 
 
 
-    const isWatchlisted = stockData && watchlist.some(item => item.symbol === stockData.symbol);
+    const isWatchlisted = stockData && watchlist.some(w => w.symbol === stockData.symbol);
 
     // Currency Helper
     const getConvertedPrice = (price) => {
@@ -221,7 +228,7 @@ const DashboardPage = () => {
                     <SearchBar onSearch={handleSearch} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '30px', alignItems: 'start' }}>
+                <div className="dashboard-layout">
 
                     {/* Left Column: Charts & Data */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -263,18 +270,18 @@ const DashboardPage = () => {
                                 </div>
                             </>
                         ) : (
-                            <div className="card" style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                            <div className="card market-snapshot-card">
+                                <div className="market-snapshot-icon-wrapper">
                                     <TrendingUp size={40} color="var(--accent-primary)" />
                                 </div>
-                                <h3 style={{ color: 'var(--text-primary)', fontSize: '1.5rem', marginBottom: '12px' }}>Market Snapshot</h3>
-                                <p style={{ maxWidth: '400px', lineHeight: '1.6', marginBottom: '30px' }}>
+                                <h3 className="market-snapshot-title">Market Snapshot</h3>
+                                <p className="market-snapshot-desc">
                                     Use the search bar above to dive deep into any company.
                                 </p>
 
                                 {/* General Market News (Displayed when no stock selected) */}
-                                <div style={{ width: '100%', textAlign: 'left' }}>
-                                    <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', color: 'var(--text-primary)' }}>Global Market Headlines</h3>
+                                <div className="global-headlines-section">
+                                    <h3 className="global-headlines-title">Global Market Headlines</h3>
                                     <NewsGrid news={generalNews} loading={!generalNews.length} limit={6} />
                                 </div>
                             </div>
