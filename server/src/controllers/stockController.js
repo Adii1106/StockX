@@ -1,6 +1,14 @@
 const Watchlist = require('../models/Watchlist');
 const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance();
+
+// Yahoo data is often messy, so we suppress strict validation to prevent crashes
+const yahooFinance = new YahooFinance({
+    validation: {
+        logErrors: false,
+        logOptionsErrors: false,
+    },
+    suppressNotices: ['yahooSurvey', 'ripHistorical']
+});
 
 // @desc    Get stock quote
 // @route   GET /api/stocks/quote/:symbol
@@ -8,7 +16,7 @@ const getQuote = async (req, res) => {
   try {
     const symbol = req.params.symbol;
     // using yahoo finance wrapper because i dont want to pay for an api
-    const quote = await yahooFinance.quote(symbol);
+    const quote = await yahooFinance.quote(symbol, {}, { validateResult: false });
     
     // Normalize data for frontend
     const data = {
@@ -53,7 +61,7 @@ const getHistory = async (req, res) => {
     const result = await yahooFinance.historical(symbol, {
       period1: pastDate,
       period2: today,
-    });
+    }, { validateResult: false });
 
     // Format for Recharts: [{ date: '...', price: 123 }]
     const formattedData = result.map(item => ({
@@ -76,7 +84,7 @@ const searchStocks = async (req, res) => {
     if (!query) {
       return res.status(400).json({ message: 'Query parameter is required' });
     }
-    const results = await yahooFinance.search(query);
+    const results = await yahooFinance.search(query, {}, { validateResult: false });
     const quotes = results.quotes.filter(q => q.isYahooFinance).map(q => ({
       symbol: q.symbol,
       name: q.longname || q.shortname || q.symbol,
@@ -94,7 +102,7 @@ const searchStocks = async (req, res) => {
 const getNews = async (req, res) => {
   try {
     const symbol = req.params.symbol;
-    const result = await yahooFinance.search(symbol, { newsCount: 5 });
+    const result = await yahooFinance.search(symbol, { newsCount: 5 }, { validateResult: false });
     res.json(result.news || []);
   } catch (error) {
     console.error(`Error fetching news for ${req.params.symbol}:`, error.message);
@@ -109,7 +117,7 @@ const getExchangeRates = async (req, res) => {
     // Fetch generic rates
     // Yahoo often returns 'USDINR=X' for 'INR=X'. We'll fetch what we know works.
     const symbols = ['INR=X', 'EUR=X', 'GBP=X', 'JPY=X'];
-    const quotes = await Promise.all(symbols.map(s => yahooFinance.quote(s)));
+    const quotes = await Promise.all(symbols.map(s => yahooFinance.quote(s, {}, { validateResult: false })));
     
     const rates = {};
     quotes.forEach(q => {
@@ -134,7 +142,7 @@ const getExchangeRates = async (req, res) => {
 const getMarketNews = async (req, res) => {
   try {
     // Search for broad topics to get general market news
-    const result = await yahooFinance.search('stock market', { newsCount: 8 });
+    const result = await yahooFinance.search('stock market', { newsCount: 8 }, { validateResult: false });
     res.json(result.news || []);
   } catch (error) {
     console.error('Error fetching market news:', error.message);
@@ -155,7 +163,7 @@ const getBatchQuotes = async (req, res) => {
     const quotes = await Promise.all(
       symbolArray.map(async (symbol) => {
         try {
-          const quote = await yahooFinance.quote(symbol);
+          const quote = await yahooFinance.quote(symbol, {}, { validateResult: false });
           return {
             symbol: quote.symbol,
             price: quote.regularMarketPrice,
@@ -250,7 +258,7 @@ const getStockDetails = async (req, res) => {
 
 const getExchangeRatesInternal = async () => {
     const symbols = ['INR=X', 'EUR=X', 'GBP=X', 'JPY=X'];
-    const quotes = await Promise.all(symbols.map(s => yahooFinance.quote(s).catch(() => null)));
+    const quotes = await Promise.all(symbols.map(s => yahooFinance.quote(s, {}, { validateResult: false }).catch(() => null)));
     
     const rates = {};
     quotes.forEach(q => {
@@ -266,7 +274,7 @@ const getExchangeRatesInternal = async () => {
 };
 
 const getMarketNewsInternal = async () => {
-    const result = await yahooFinance.search('stock market', { newsCount: 8 });
+    const result = await yahooFinance.search('stock market', { newsCount: 8 }, { validateResult: false });
     return result.news || [];
 };
 
@@ -274,7 +282,7 @@ const getBatchQuotesInternal = async (symbolArray) => {
     const quotes = await Promise.all(
         symbolArray.map(async (symbol) => {
             try {
-                const quote = await yahooFinance.quote(symbol);
+                const quote = await yahooFinance.quote(symbol, {}, { validateResult: false });
                 return {
                     symbol: quote.symbol,
                     price: quote.regularMarketPrice,
@@ -290,7 +298,7 @@ const getBatchQuotesInternal = async (symbolArray) => {
 };
 
 const getQuoteInternal = async (symbol) => {
-    const quote = await yahooFinance.quote(symbol);
+    const quote = await yahooFinance.quote(symbol, {}, { validateResult: false });
     return {
         symbol: quote.symbol,
         price: quote.regularMarketPrice,
@@ -314,7 +322,7 @@ const getHistoryInternal = async (symbol) => {
     const result = await yahooFinance.historical(symbol, {
         period1: pastDate,
         period2: today,
-    });
+    }, { validateResult: false });
 
     return result.map(item => ({
         date: item.date.toISOString().split('T')[0],
@@ -323,7 +331,7 @@ const getHistoryInternal = async (symbol) => {
 };
 
 const getNewsInternal = async (symbol) => {
-    const result = await yahooFinance.search(symbol, { newsCount: 5 });
+    const result = await yahooFinance.search(symbol, { newsCount: 5 }, { validateResult: false });
     return result.news || [];
 };
 
