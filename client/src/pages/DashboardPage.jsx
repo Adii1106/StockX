@@ -33,12 +33,12 @@ const MOVERS_DATA = [
 ];
 
 const DashboardPage = () => {
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, watchlist, setWatchlist } = useContext(AuthContext);
     const navigate = useNavigate();
     const [currentSymbol, setCurrentSymbol] = useState('');
     const [stockData, setStockData] = useState(null);
     const [chartData, setChartData] = useState([]);
-    const [watchlist, setWatchlist] = useState([]);
+    // const [watchlist, setWatchlist] = useState([]); // moved to context! logic syncs everywhere now
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -86,7 +86,7 @@ const DashboardPage = () => {
                 setMarketMovers(formatMovers(d.marketMovers));
 
                 if (d.watchlist) {
-                    setWatchlist(d.watchlist);
+                    setWatchlist(d.watchlist); // sync global state
                 }
 
             } catch (err) {
@@ -97,7 +97,7 @@ const DashboardPage = () => {
         };
 
         getData();
-    }, [user]);
+    }, [user, setWatchlist]); // added setWatchlist just in case, though it's stable
 
     useEffect(() => {
         if (currentSymbol) {

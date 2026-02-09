@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import AuthContext from '../context/AuthContext';
 import api from '../api/axios';
 import Watchlist from '../components/Watchlist';
@@ -6,30 +6,26 @@ import DashboardHeader from '../components/DashboardHeader';
 import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
-    const { user, logout } = useContext(AuthContext);
-    const [watchlist, setWatchlist] = useState([]);
+    const { user, logout, watchlist, refreshWatchlist, setWatchlist } = useContext(AuthContext);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchWatchlist = async () => {
-            try {
-                const { data } = await api.get('/watchlist');
-                setWatchlist(data);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        fetchWatchlist();
-    }, []);
+        // only fetch if we don't have it yet
+        // or just let the global context handle it?
+        // if i go here directly it might be empty
+        if (watchlist.length === 0) {
+            refreshWatchlist();
+        }
+    }, [watchlist.length, refreshWatchlist]);
 
     const deleteItem = async (id) => {
         try {
             await api.delete(`/watchlist/${id}`);
-            // update ui logic
+            // update global state
             const newList = watchlist.filter(item => item._id !== id);
             setWatchlist(newList);
         } catch (err) {
-            console.log('error deleting', err);
+            console.log('error deleting item', err);
         }
     };
 

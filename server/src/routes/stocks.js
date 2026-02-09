@@ -8,6 +8,8 @@ const {
   getExchangeRates,
   getMarketNews,
   getBatchQuotes,
+  getDashboardData,
+  getStockDetails,
 } = require('../controllers/stockController');
 
 router.get('/quote/:symbol', getQuote);
