@@ -1,3 +1,4 @@
+const Watchlist = require('../models/Watchlist');
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 
@@ -177,6 +178,156 @@ const getBatchQuotes = async (req, res) => {
   }
 };
 
+// @desc    Get dashboard initial data (Rates, News, Movers, Watchlist)
+// @route   GET /api/stocks/dashboard
+const getDashboardData = async (req, res) => {
+    try {
+        const { userId } = req.query; // pass userId if we want watchlist too
+
+        // 1. Define promises for parallel execution
+        // fetch everything at once to make it faster
+        const promises = {
+            rates: getExchangeRatesInternal(),
+            generalNews: getMarketNewsInternal(),
+            marketMovers: getBatchQuotesInternal(['AAPL', 'NVDA', 'GOOGL', 'MSFT', 'JPM', 'BAC', 'V', 'MA', 'AMZN', 'DIS', 'NFLX', 'MCD'])
+        };
+
+        // 2. Add watchlist if user is logged in
+        if (userId) {
+            promises.watchlist = Watchlist.find({ user: userId }).sort({ date: -1 });
+        }
+
+        // 3. Resolve all
+        const results = await Promise.all(
+            Object.values(promises)
+        );
+
+        // 4. Construct response object manually to match keys
+        // Order of values matches Object.values(promises)
+        const keys = Object.keys(promises);
+        const responseData = {};
+        
+        results.forEach((result, index) => {
+            responseData[keys[index]] = result;
+        });
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.log('Error fetching dashboard data:', error.message);
+        res.status(500).json({ message: 'Error fetching dashboard data' });
+    }
+};
+
+// @desc    Get comprehensive stock details (Quote, History, News)
+// @route   GET /api/stocks/details/:symbol
+const getStockDetails = async (req, res) => {
+    try {
+        const symbol = req.params.symbol;
+        const { period } = req.query;
+
+        // get all details in parallel
+        const [quote, history, news] = await Promise.all([
+            getQuoteInternal(symbol),
+            getHistoryInternal(symbol, period),
+            getNewsInternal(symbol)
+        ]);
+
+        res.json({
+            quote,
+            history,
+            news
+        });
+
+    } catch (error) {
+        console.log(`Error fetching details for ${req.params.symbol}:`, error.message);
+        res.status(500).json({ message: 'Error fetching stock details' });
+    }
+};
+
+
+// --- Internal Helpers (Refactored from original functions to return data instead of res.json) ---
+
+const getExchangeRatesInternal = async () => {
+    const symbols = ['INR=X', 'EUR=X', 'GBP=X', 'JPY=X'];
+    const quotes = await Promise.all(symbols.map(s => yahooFinance.quote(s).catch(() => null)));
+    
+    const rates = {};
+    quotes.forEach(q => {
+        if (!q) return;
+        let currency = q.symbol.replace('=X', '');
+        if (currency.startsWith('USD') && currency.length > 3) {
+            currency = currency.replace('USD', '');
+        }
+        rates[currency] = q.regularMarketPrice;
+    });
+    rates['USD'] = 1;
+    return rates;
+};
+
+const getMarketNewsInternal = async () => {
+    const result = await yahooFinance.search('stock market', { newsCount: 8 });
+    return result.news || [];
+};
+
+const getBatchQuotesInternal = async (symbolArray) => {
+    const quotes = await Promise.all(
+        symbolArray.map(async (symbol) => {
+            try {
+                const quote = await yahooFinance.quote(symbol);
+                return {
+                    symbol: quote.symbol,
+                    price: quote.regularMarketPrice,
+                    change: quote.regularMarketChangePercent,
+                    name: quote.longName || quote.shortName,
+                };
+            } catch (error) {
+                return null;
+            }
+        })
+    );
+    return quotes.filter(q => q !== null);
+};
+
+const getQuoteInternal = async (symbol) => {
+    const quote = await yahooFinance.quote(symbol);
+    return {
+        symbol: quote.symbol,
+        price: quote.regularMarketPrice,
+        change: quote.regularMarketChange,
+        changePercent: quote.regularMarketChangePercent,
+        name: quote.longName || quote.shortName,
+        open: quote.regularMarketOpen,
+        high: quote.regularMarketDayHigh,
+        low: quote.regularMarketDayLow,
+        prevClose: quote.regularMarketPreviousClose,
+        volume: quote.regularMarketVolume,
+        marketCap: quote.marketCap,
+    };
+};
+
+const getHistoryInternal = async (symbol) => {
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - 100);
+    
+    const result = await yahooFinance.historical(symbol, {
+        period1: pastDate,
+        period2: today,
+    });
+
+    return result.map(item => ({
+        date: item.date.toISOString().split('T')[0],
+        price: item.close,
+    }));
+};
+
+const getNewsInternal = async (symbol) => {
+    const result = await yahooFinance.search(symbol, { newsCount: 5 });
+    return result.news || [];
+};
+
+
 module.exports = {
   getQuote,
   getHistory,
@@ -185,4 +336,6 @@ module.exports = {
   getExchangeRates,
   getMarketNews,
   getBatchQuotes,
+  getDashboardData, // New
+  getStockDetails,  // New
 };

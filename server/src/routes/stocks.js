@@ -18,4 +18,8 @@ router.get('/news/:symbol', getNews);       // Specific stock news
 router.get('/rates', getExchangeRates);
 router.get('/batch', getBatchQuotes);
 
+// Optimization endpoints
+router.get('/dashboard', getDashboardData);
+router.get('/details/:symbol', getStockDetails);
+
 module.exports = router;

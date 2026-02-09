@@ -11,6 +11,27 @@ import { TrendingUp, Newspaper, Globe, LogOut, TrendingDown } from 'lucide-react
 import { useNavigate } from 'react-router-dom';
 import './DashboardPage.css';
 
+// Static data for now... need to move to DB later
+const MOVERS_DATA = [
+    // Tech stocks
+    { symbol: 'AAPL', category: 'Technology', domain: 'apple.com' },
+    { symbol: 'NVDA', category: 'Technology', domain: 'nvidia.com' },
+    { symbol: 'GOOGL', category: 'Technology', domain: 'google.com' },
+    { symbol: 'MSFT', category: 'Technology', domain: 'microsoft.com' },
+
+    // Bank stuff
+    { symbol: 'JPM', category: 'Financial', domain: 'jpmorganchase.com' },
+    { symbol: 'BAC', category: 'Financial', domain: 'bankofamerica.com' },
+    { symbol: 'V', category: 'Financial', domain: 'visa.com' },
+    { symbol: 'MA', category: 'Financial', domain: 'mastercard.com' },
+
+    // Others
+    { symbol: 'AMZN', category: 'Services', domain: 'amazon.com' },
+    { symbol: 'DIS', category: 'Services', domain: 'thewaltdisneycompany.com' },
+    { symbol: 'NFLX', category: 'Services', domain: 'netflix.com' },
+    { symbol: 'MCD', category: 'Services', domain: 'mcdonalds.com' },
+];
+
 const DashboardPage = () => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -33,128 +54,79 @@ const DashboardPage = () => {
     const [loadingMarketMovers, setLoadingMarketMovers] = useState(false);
 
     // Static data for now... need to move to DB later
-    const MOVERS_DATA = [
-        // Tech stocks
-        { symbol: 'AAPL', category: 'Technology', domain: 'apple.com' },
-        { symbol: 'NVDA', category: 'Technology', domain: 'nvidia.com' },
-        { symbol: 'GOOGL', category: 'Technology', domain: 'google.com' },
-        { symbol: 'MSFT', category: 'Technology', domain: 'microsoft.com' },
 
-        // Bank stuff
-        { symbol: 'JPM', category: 'Financial', domain: 'jpmorganchase.com' },
-        { symbol: 'BAC', category: 'Financial', domain: 'bankofamerica.com' },
-        { symbol: 'V', category: 'Financial', domain: 'visa.com' },
-        { symbol: 'MA', category: 'Financial', domain: 'mastercard.com' },
-
-        // Others
-        { symbol: 'AMZN', category: 'Services', domain: 'amazon.com' },
-        { symbol: 'DIS', category: 'Services', domain: 'thewaltdisneycompany.com' },
-        { symbol: 'NFLX', category: 'Services', domain: 'netflix.com' },
-        { symbol: 'MCD', category: 'Services', domain: 'mcdonalds.com' },
-    ];
 
     useEffect(() => {
-        // load everything on start
-        const loadAll = async () => {
-            fetchWatchlist();
-            fetchRates();
-            fetchGeneralNews();
-            fetchMarketMovers();
+        // helper to formatting market movers
+        const formatMovers = (data) => {
+            return data.map(s => {
+                const found = MOVERS_DATA.find(m => m.symbol === s.symbol);
+                return {
+                    ...s,
+                    category: found?.category || 'Other',
+                    domain: found?.domain || s.symbol.toLowerCase() + '.com',
+                };
+            });
         };
 
-        loadAll();
-    }, []);
+        // load everything at once to be faster!! 
+        const getData = async () => {
+            setLoadingMarketMovers(true);
+            try {
+                let uid = null;
+                if (user && user.id) uid = user.id;
+                else if (user && user._id) uid = user._id;
+
+                // one big request
+                const res = await api.get(`/stocks/dashboard${uid ? `?userId=${uid}` : ''}`);
+                const d = res.data; // less typing
+
+                setRates(d.rates);
+                setGeneralNews(d.generalNews);
+                setMarketMovers(formatMovers(d.marketMovers));
+
+                if (d.watchlist) {
+                    setWatchlist(d.watchlist);
+                }
+
+            } catch (err) {
+                console.log('error loading db', err);
+            }
+
+            setLoadingMarketMovers(false);
+        };
+
+        getData();
+    }, [user]);
 
     useEffect(() => {
         if (currentSymbol) {
-            fetchStockData(currentSymbol);
-            fetchNews(currentSymbol);
+            fetchStockDetails(currentSymbol);
         }
     }, [currentSymbol]);
 
-    const fetchMarketMovers = async () => {
-        setLoadingMarketMovers(true);
-        try {
-            // join symbols with comma
-            const symbols = MOVERS_DATA.map(s => s.symbol).join(',');
 
-            const response = await api.get(`/stocks/batch?symbols=${symbols}`);
-            const data = response.data;
 
-            // combine api data with our static list
-            const finalData = data.map(stock => {
-                const meta = MOVERS_DATA.find(m => m.symbol === stock.symbol);
-                return {
-                    ...stock,
-                    category: meta?.category || 'Other',
-                    domain: meta?.domain || stock.symbol.toLowerCase() + '.com',
-                };
-            });
-
-            setMarketMovers(finalData);
-        } catch (err) {
-            console.log('failed to get movers', err);
-        } finally {
-            setLoadingMarketMovers(false);
-        }
-    };
-
-    const fetchRates = async () => {
-        try {
-            const { data } = await api.get('/stocks/rates');
-            setRates(data);
-        } catch (error) {
-            console.error('Error fetching rates', error);
-        }
-    };
-
-    const fetchGeneralNews = async () => {
-        try {
-            const { data } = await api.get('/stocks/news/general');
-            setGeneralNews(data);
-        } catch (error) {
-            console.error('Error fetching general news', error);
-        }
-    };
-
-    const fetchWatchlist = async () => {
-        try {
-            const { data } = await api.get('/watchlist');
-            setWatchlist(data);
-        } catch (err) {
-            console.error('Error fetching watchlist', err);
-        }
-    };
-
-    const fetchStockData = async (symbol) => {
+    const fetchStockDetails = async (symbol) => {
         setLoading(true);
         setError(null);
+        setLoadingNews(true);
 
         try {
-            // get quote and history in parallel? nah just await both
-            const q = await api.get(`/stocks/quote/${symbol}`);
-            const h = await api.get(`/stocks/history/${symbol}`);
+            // Fetch Quote, History, and News in one go
+            const { data } = await api.get(`/stocks/details/${symbol}`);
 
-            setStockData(q.data);
-            setChartData(h.data);
-
+            setStockData(data.quote);
+            setChartData(data.history);
+            setNews(data.news);
         } catch (err) {
             console.log(err);
             setError('Could not fetch stock data... try again later');
             setStockData(null);
             setChartData([]);
-        }
-        setLoading(false);
-    };
-
-    const fetchNews = async (symbol) => {
-        setLoadingNews(true);
-        try {
-            const { data } = await api.get(`/stocks/news/${symbol}`);
-            setNews(data);
-        } catch (error) {
-            console.error('Error fetching news', error);
+            setNews([]);
         } finally {
+            setLoading(false);
             setLoadingNews(false);
         }
     };
