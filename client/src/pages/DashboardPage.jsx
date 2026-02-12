@@ -7,7 +7,10 @@ import PriceChart from '../components/PriceChart';
 import MarketList from '../components/MarketList'; // Replaces PopularStocks
 import Watchlist from '../components/Watchlist';
 import DashboardHeader from '../components/DashboardHeader';
-import { TrendingUp, Newspaper, Globe, LogOut, TrendingDown } from 'lucide-react';
+import TickerTape from '../components/TickerTape';
+import TradingPanel from '../components/TradingPanel';
+import PortfolioOverview from '../components/PortfolioOverview';
+import { TrendingUp, Newspaper, Globe, LogOut, TrendingDown, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './DashboardPage.css';
 
@@ -33,8 +36,11 @@ const MOVERS_DATA = [
 ];
 
 const DashboardPage = () => {
-    const { user, logout, watchlist, setWatchlist } = useContext(AuthContext);
+    const { user, logout, watchlist, setWatchlist, refreshUser } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [portfolio, setPortfolio] = useState(null);
+    const [loadingPortfolio, setLoadingPortfolio] = useState(false);
+    const [tradeLoading, setTradeLoading] = useState(false);
     const [currentSymbol, setCurrentSymbol] = useState('');
     const [stockData, setStockData] = useState(null);
     const [chartData, setChartData] = useState([]);
@@ -97,7 +103,44 @@ const DashboardPage = () => {
         };
 
         getData();
-    }, [user, setWatchlist]); // added setWatchlist just in case, though it's stable
+        fetchPortfolio();
+    }, [user, setWatchlist]); 
+
+    const fetchPortfolio = async () => {
+        if (!user) return;
+        setLoadingPortfolio(true);
+        try {
+            const { data } = await api.get('/portfolio');
+            setPortfolio(data);
+        } catch (err) {
+            console.error('failed to load portfolio', err);
+        } finally {
+            setLoadingPortfolio(false);
+        }
+    };
+
+    const handleTrade = async (type, shares) => {
+        if (!stockData) return;
+        setTradeLoading(true);
+        try {
+            const endpoint = type === 'BUY' ? '/portfolio/buy' : '/portfolio/sell';
+            await api.post(endpoint, {
+                symbol: stockData.symbol,
+                shares: shares
+            });
+            
+            // Refresh data
+            await fetchPortfolio();
+            await refreshUser(); // update balance in header
+            
+            // show some feedback? maybe later
+        } catch (err) {
+            console.error('Trade failed:', err);
+            alert(err.response?.data?.message || 'Trade failed');
+        } finally {
+            setTradeLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (currentSymbol) {
@@ -181,6 +224,8 @@ const DashboardPage = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            
+            <TickerTape />
 
             <DashboardHeader
                 user={user}
@@ -231,6 +276,13 @@ const DashboardPage = () => {
                                     rate={rate}
                                 />
 
+                                <TradingPanel 
+                                    stock={stockData} 
+                                    balance={user?.balance} 
+                                    onTrade={handleTrade}
+                                    loading={tradeLoading}
+                                />
+
                                 {/* Specific Stock News */}
                                 <div style={{ marginTop: '20px' }}>
                                     <h3 style={{ fontSize: '1.5rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -262,6 +314,13 @@ const DashboardPage = () => {
 
                     {/* Right Column: Sidebar */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        
+                        {/* Portfolio Section */}
+                        <PortfolioOverview 
+                            portfolio={portfolio} 
+                            loading={loadingPortfolio}
+                            onSelect={handleSearch}
+                        />
 
                         {/* Watchlist Section */}
                         <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
