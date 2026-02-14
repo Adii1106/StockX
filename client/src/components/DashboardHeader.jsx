@@ -26,10 +26,15 @@ function DashboardHeader({ user, logout, currency, setCurrency }) {
                     <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>StockX</span>
                 </Link>
 
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                     <Link to="/dashboard" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontWeight: '500', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
                         Dashboard
                     </Link>
+                    {user && (
+                        <div style={{ padding: '4px 12px', background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.2)', borderRadius: '20px', color: '#34d399', fontSize: '0.8rem', fontWeight: '600' }}>
+                            ${user.balance?.toLocaleString()}
+                        </div>
+                    )}
                 </div>
             </div>
 

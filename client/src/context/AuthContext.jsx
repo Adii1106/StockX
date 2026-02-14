@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext();
@@ -9,14 +9,14 @@ export const AuthProvider = ({ children }) => {
     const [watchlist, setWatchlist] = useState([]); // global watchlist state
 
     // fetch watchlist from server
-    const refreshWatchlist = async () => {
+    const refreshWatchlist = useCallback(async () => {
         try {
             const { data } = await api.get('/watchlist');
             setWatchlist(data);
         } catch (err) {
             console.log('failed to load watchlist context', err);
         }
-    };
+    }, []);
 
     useEffect(() => {
         const checkUserLoggedIn = async () => {
@@ -61,16 +61,26 @@ export const AuthProvider = ({ children }) => {
         setWatchlist([]); // clear it
     };
 
+    const refreshUser = useCallback(async () => {
+        try {
+            const { data } = await api.get('/auth/me');
+            setUser(data);
+        } catch (error) {
+            console.error("User refresh failed:", error);
+        }
+    }, []);
+
     return (
         <AuthContext.Provider value={{
             user,
             login: handleLogin,
             signup,
             logout,
+            refreshUser,    // added
             loading,
-            watchlist,      // added
-            setWatchlist,   // added
-            refreshWatchlist // helper
+            watchlist,      
+            setWatchlist,   
+            refreshWatchlist 
         }}>
             {children}
         </AuthContext.Provider>

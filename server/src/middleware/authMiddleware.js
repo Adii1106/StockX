@@ -17,7 +17,13 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({ message: 'Invalid token signature' });
+      }
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Token expired' });
+      }
+      console.error('Auth Error:', error.message);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
