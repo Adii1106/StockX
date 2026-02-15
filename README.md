@@ -7,10 +7,12 @@
 ## 🚀 Features
 
 -   **Real-Time Stock Data**: Live quotes, prices, and percentage changes powered by Yahoo Finance API.
+-   **Virtual Trading Simulation**: Buy and sell stocks using $10,000 of virtual currency to practice trading.
+-   **Portfolio Management**: Real-time tracking of holdings, average buy price, and total profit/loss.
+-   **Transaction History**: Keep a record of every trade with precise timestamps and pricing.
 -   **Interactive Charts**: Dynamic price history charts (1D, 1W, 1M, etc.) using `Recharts`.
 -   **Market Movers**: Track top gainers and active stocks by sector (Technology, Financial, Services).
--   **Latest News**: aggregated news feed for specific stocks and general market headlines.
--   **Company Branding**: Automatic logo fetching for a polished UI.
+-   **Latest News**: Aggregated news feed for specific stocks and general market headlines.
 -   **User Watchlist**: Save favorite stocks to your personal watchlist (requires account).
 -   **Secure Authentication**: JWT-based Signup and Login system.
 -   **Premium Dark UI**: Sleek, responsive dark mode design with glassmorphism effects.
